@@ -163,10 +163,6 @@ Item* randomDrop(const vector<Item*>& items) {
     if (items.empty()) {
         return nullptr; // Если массив пуст, ничего не выпадает
     }
-
-    if (items.empty()) {
-        return nullptr; // Если массив пуст, ничего не выпадает
-    }
     random_device rd;
     mt19937 gen(rd());
     uniform_int_distribution<> distrib(0, items.size() - 1);
@@ -220,7 +216,6 @@ void levelUp(Player& player) {
 
 }
 
-
 class Dungeon {
 private:
     int width;
@@ -235,103 +230,146 @@ private:
         return distrib(gen);
     }
 
-    // Генерация комнат
-    void generateRooms(int numRooms) {
-        for (int i = 0; i < numRooms; ++i) {
-            // Случайные размеры комнаты
-            int roomWidth = random(4, 10);
-            int roomHeight = random(4, 10);
+    // Алгоритм клеточного автомата
+    void generateCellularAutomaton(int iterations) {
+        // Заполняем карту случайными клетками (стенa/пол)
+        // (изменение: 60% стен вместо 40%)
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                if (random(0, 100) < 80) {
+                    map[y][x] = '#'; // Стена
+                }
+                else {
+                    map[y][x] = '.'; // Пол
+                }
+            }
+        }
 
-            // Случайные координаты комнаты
-            int roomX = random(1, width - roomWidth);
-            int roomY = random(1, height - roomHeight);
+        // Итерации клеточного автомата
+        for (int i = 0; i < iterations; ++i) {
+            // Создаем временную карту
+            vector<vector<char>> tempMap = map;
 
-            // Проверка, не пересекается ли комната с другими комнатами
-            bool intersects = false;
-            for (int y = roomY; y < roomY + roomHeight; ++y) {
-                for (int x = roomX; x < roomX + roomWidth; ++x) {
-                    if (map[y][x] != '#') {
-                        intersects = true;
-                        break;
+            // Проходимся по каждой клетке
+            for (int y = 1; y < height - 1; ++y) {
+                for (int x = 1; x < width - 1; ++x) {
+                    // Считаем живых соседей
+                    int liveNeighbours = countLiveNeighbours(x, y);
+
+                    // Применяем правила клеточного автомата
+                    if (map[y][x] == '#' && (liveNeighbours < 0 || liveNeighbours > 6)) {
+                        tempMap[y][x] = '.'; // Умирает
+                    }
+                    else if (map[y][x] == '.' && liveNeighbours == 3) {
+                        tempMap[y][x] = '#'; // Рождается
                     }
                 }
-                if (intersects) {
-                    break;
-                }
             }
 
-            // Если комната не пересекается, то создаем её
-            if (!intersects) {
-                for (int y = roomY; y < roomY + roomHeight; ++y) {
-                    for (int x = roomX; x < roomX + roomWidth; ++x) {
-                        map[y][x] = '.';
-                    }
-                }
-            }
-            else {
-                // Если комната пересекается, то генерируем её заново
-                --i;
-            }
+            // Обновляем карту
+            map = tempMap;
         }
     }
 
-    // Создание коридора между двумя комнатами
-    void createCorridor(int x1, int y1, int x2, int y2) {
-        // Выбираем случайный путь: горизонтальный или вертикальный
-        bool horizontal = random(0, 1);
-
-        // Горизонтальный коридор
-        if (horizontal) {
-            for (int x = min(x1, x2); x <= max(x1, x2); ++x) {
-                map[y1][x] = '.';
-            }
-            for (int y = min(y1, y2); y <= max(y1, y2); ++y) {
-                map[y][x2] = '.';
+    // Подсчет живых соседей для клетки
+    int countLiveNeighbours(int x, int y) {
+        int count = 0;
+        for (int dy = -1; dy <= 1; ++dy) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                if (dx == 0 && dy == 0) {
+                    continue; // Не считаем клетку
+                }
+                if (map[y + dy][x + dx] == '#') {
+                    count++;
+                }
             }
         }
-        else {
-            // Вертикальный коридор
-            for (int y = min(y1, y2); y <= max(y1, y2); ++y) {
-                map[y][x1] = '.';
-            }
-            for (int x = min(x1, x2); x <= max(x1, x2); ++x) {
-                map[y2][x] = '.';
+        return count;
+    }
+
+    // Создание коридоров
+    void createCorridors() {
+        // Проходимся по карте, ищем места для коридоров
+        for (int y = 1; y < height - 1; ++y) {
+            for (int x = 1; x < width - 1; ++x) {
+                if (map[y][x] == '.' &&
+                    (map[y - 1][x] == '#' || map[y + 1][x] == '#' ||
+                        map[y][x - 1] == '#' || map[y][x + 1] == '#')) {
+                    // Находим точку входа/выхода
+                    int direction = random(0, 3);
+                    switch (direction) {
+                    case 0: if (map[y - 1][x] == '#') { map[y - 1][x] = '.'; } break;
+                    case 1: if (map[y + 1][x] == '#') { map[y + 1][x] = '.'; } break;
+                    case 2: if (map[y][x - 1] == '#') { map[y][x - 1] = '.'; } break;
+                    case 3: if (map[y][x + 1] == '#') { map[y][x + 1] = '.'; } break;
+                    }
+                }
             }
         }
     }
-
-    // Соединение комнат коридорами
-    void connectRooms() {
-        // Находим центры комнат
-        vector<pair<int, int>> roomCenters;
+    // Функция для создания комнаты в заданных координатах
+    void createRoom(int x, int y, int width, int height) {
+        for (int row = y; row < y + height; ++row) {
+            for (int col = x; col < x + width; ++col) {
+                if (row >= 0 && row < height && col >= 0 && col < width) {
+                    map[row][col] = '.';
+                }
+            }
+        }
+    }
+    // Функция для поиска пустых областей
+    vector<pair<int, int>> findEmptyAreas() {
+        vector<pair<int, int>> emptyAreas;
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 if (map[y][x] == '.') {
-                    // Проверяем, не является ли текущая клетка центром комнаты
-                    bool isRoomCenter = true;
-                    for (int dy = -1; dy <= 1; ++dy) {
-                        for (int dx = -1; dx <= 1; ++dx) {
-                            if (x + dx >= 0 && x + dx < width && y + dy >= 0 && y + dy < height) {
-                                if (map[y + dy][x + dx] == '#') {
-                                    isRoomCenter = false;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!isRoomCenter) {
-                            break;
-                        }
-                    }
-                    if (isRoomCenter) {
-                        roomCenters.push_back({ x, y });
+                    // Проверяем, что клетка не граничит с другой пустой областью
+                    if (x > 0 && map[y][x - 1] == '#' &&
+                        x < width - 1 && map[y][x + 1] == '#' &&
+                        y > 0 && map[y - 1][x] == '#' &&
+                        y < height - 1 && map[y + 1][x] == '#') {
+                        emptyAreas.push_back(make_pair(x, y));
                     }
                 }
             }
         }
+        return emptyAreas;
+    }
+    void createCorridorBetweenRooms(pair<int, int> room1, pair<int, int> room2) {
+        int x1 = (room1.first * 2 + 1) * (width / 10);
+        int y1 = (room1.second * 2 + 1) * (height / 10);
+        int x2 = (room2.first * 2 + 1) * (width / 10);
+        int y2 = (room2.second * 2 + 1) * (height / 10);
 
-        // Соединяем комнаты попарно
-        for (int i = 0; i < roomCenters.size() - 1; ++i) {
-            createCorridor(roomCenters[i].first, roomCenters[i].second, roomCenters[i + 1].first, roomCenters[i + 1].second);
+        while (x1 != x2 || y1 != y2) {
+            if (x1 < x2) {
+                x1++;
+            }
+            else if (x1 > x2) {
+                x1--;
+            }
+            else if (y1 < y2) {
+                y1++;
+            }
+            else {
+                y1--;
+            }
+            map[y1][x1] = '.';
+        }
+    }
+
+    void createCorridorsBetweenRooms() {
+        for (int i = 0; i < height / 10; i++) {
+            for (int j = 0; j < width / 10; j++) {
+                if (i % 2 == 1 && j % 2 == 1) {
+                    if (j + 1 < width / 10) {
+                        createCorridorBetweenRooms({ i, j }, { i, j + 1 });
+                    }
+                    if (i + 1 < height / 10) {
+                        createCorridorBetweenRooms({ i, j }, { i + 1, j });
+                    }
+                }
+            }
         }
     }
 
@@ -356,20 +394,73 @@ public:
         height = a;
     }
 
+    // Создаем коридоры между комнатами (горизонтальные)
+    void createPredefinedCorridors() {
+        for (int y = 0; y < height; y += 2) {
+            for (int x = 0; x < width; x++) {
+                if (x % 10 == 0 && map[y][x] == '#' && map[y][x + 1] == '#') {
+                    map[y][x] = '.';
+                    map[y][x + 1] = '.';
+                    x += 2; // Переходим к следующей "паре" клеток
+                }
+            }
+        }
+    }
+
+    // Создаем коридоры между комнатами (вертикальные)
+    void createPredefinedCorridors2() {
+        for (int x = 0; x < width; x += 2) {
+            for (int y = 0; y < height; y++) {
+                if (y % 10 == 0 && map[y][x] == '#' && map[y + 1][x] == '#') {
+                    map[y][x] = '.';
+                    map[y + 1][x] = '.';
+                    y += 2; // Переходим к следующей "паре" клеток
+                }
+            }
+        }
+    }
+
+    // Создаем комнаты (просто прямоугольники)
+    void createPredefinedRooms() {
+        createRoom(2, 2, 10, 9); //  Комната 1
+        createRoom(width / 2 - 3, height / 2 - 3, 10, 10); // Комната 2
+        createRoom(width - 6, height - 6, 8, 8); // Комната 3
+    }
+
+public:
+    Dungeon(int w, int h) : width(w), height(h) {
+        map.resize(height, vector<char>(width, '#'));
+    }
+
     // Генерация подземелья
     void generate() {
-        // Генерация комнат
-        generateRooms(random(4, 8));
-
-        // Соединение комнат
-        connectRooms();
-
+        // Используем клеточный автомат для базовой генерации
+        generateCellularAutomaton(10); // 10 итераций
+        createPredefinedRooms();
+        createPredefinedCorridors();
+        createPredefinedCorridors2(); // Добавляем вертикальные коридоры
+        createCorridorsBetweenRooms();
+        //раскид предметов
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                if (map[y][x] == '.') { // Если клетка пустая
+                    if (random(1, 30) == 5) {
+                        map[y][x] = 'I';
+                    }
+                }
+            }
+        }
     }
+
     // Метод для получения карты подземелья
-    vector<vector<char>> getMap() {
-        return map;
-    }
+    vector<vector<char>> getMap() {return map;}
+    // Размещаем случайные предметы
+
 };
+
+
+
+
 
 int main() {
 
@@ -446,7 +537,9 @@ int main() {
     // Создание объекта игрока
     Player player(100, 20, 5, 0, 1, true, 1, 1);
 
-
+    // Генерация карты
+    Dungeon dungeon(50, 30);
+    dungeon.generate();
 
 
     // ==================================================================
@@ -457,6 +550,7 @@ int main() {
         return 1;
     }
     Sprite wallSprite(wallTexture);
+    wallSprite.setTextureRect(IntRect(0, 0, 32, 32)); // Размер тайла 
 
     Texture floorTexture;
     if (!floorTexture.loadFromFile("textures/floor.png")) {
@@ -464,6 +558,7 @@ int main() {
         return 1;
     }
     Sprite floorSprite(floorTexture);
+    floorSprite.setTextureRect(IntRect(0, 0, 32, 32)); // Размер тайла 
 
     Texture enemyTexture;
     if (!enemyTexture.loadFromFile("textures/enemy.png")) {
@@ -471,6 +566,7 @@ int main() {
         return 1;
     }
     Sprite enemySprite(enemyTexture);
+    enemySprite.setTextureRect(IntRect(0, 0, 32, 32)); // Размер тайла 
 
     Texture itemTexture;
     if (!itemTexture.loadFromFile("textures/item.png")) {
@@ -478,10 +574,13 @@ int main() {
         return 1;
     }
     Sprite itemSprite(itemTexture);
+    itemSprite.setTextureRect(IntRect(0, 0, 32, 32)); // Размер тайла 
+
     // ==================================================================\
     //Отрисовка окна
 
-    RenderWindow window(VideoMode(640, 480), "Game");
+    RenderWindow window(VideoMode(50*32, 30*32), "Game");
+    window.setFramerateLimit(60);
     Event event;
     while (window.isOpen()) {
         while (window.pollEvent(event)) {
@@ -499,12 +598,12 @@ int main() {
         // Очищаем экран
         window.clear(Color::Black);
 
-        // Генерация карты
-        Dungeon dungeon(20, 15);
-        dungeon.generate();
+
 
         // Получаем карту
         vector<vector<char>> map = dungeon.getMap();
+
+
 
         // Отрисовка карты
         for (int y = 0; y < dungeon.getHeight(); y++) {
@@ -518,14 +617,26 @@ int main() {
                 case '.': // Пол
                     floorSprite.setPosition(x * 32, y * 32);
                     window.draw(floorSprite);
-                    bI: // Предмет
-                        itemSprite.setPosition(x * 32, y * 32);
-                    window.draw(itemSprite);
                     break;
+                case 'I': //Предмет
+                    itemSprite.setPosition(x * 32, y * 32);
+                    window.draw(itemSprite);
                 }
             }
         }
-
+        // Отрисовка границ
+        for (int y = 0; y < dungeon.getHeight(); y++) {
+            wallSprite.setPosition(0, y * 32);
+            window.draw(wallSprite);
+            wallSprite.setPosition((dungeon.getWidth() - 1) * 32, y * 32);
+            window.draw(wallSprite);
+        }
+        for (int x = 0; x < dungeon.getWidth(); x++) {
+            wallSprite.setPosition(x * 32, 0);
+            window.draw(wallSprite);
+            wallSprite.setPosition(x * 32, (dungeon.getHeight() - 1) * 32);
+            window.draw(wallSprite);
+        }
         // Отрисовка игрока
         player.getShape().setPosition(player.getX() * 32, player.getY() * 32);
         window.draw(player.getShape());
