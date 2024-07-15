@@ -442,6 +442,14 @@ int main() {
 
     // ==================================================================\
 
+    //Создание основных объектов
+    // Создание объекта игрока
+    Player player(100, 20, 5, 0, 1, true, 1, 1);
+
+
+
+
+    // ==================================================================
     // Создаем спрайты для символов
     Texture wallTexture;
     if (!wallTexture.loadFromFile("textures/wall.png")) {
@@ -471,36 +479,58 @@ int main() {
     }
     Sprite itemSprite(itemTexture);
     // ==================================================================\
-    //Создание основных объектов
-    // Создание объекта игрока
-    Player player(100, 20, 5, 0, 1, true, 1, 1);
-    // Создаем объект подземелья 
-    Dungeon dungeon(20, 15); // Например, 20x15 клеток
-    dungeon.generate();
-    vector<vector<char>> dungeonMap = dungeon.getMap();
-
-
-
-    // ==================================================================
     //Отрисовка окна
 
-	RenderWindow window(VideoMode(640, 480), "Game");
-	Event event;
-	while (window.isOpen()) {
-		while (window.pollEvent(event)) {
-			switch (event.type){
-			case sf::Event::Closed:
-				window.close();
-				break;
-			case sf::Event::KeyPressed:
-				if (event.key.code == sf::Keyboard::Escape) {
-					window.close();
-				}
-				break;
-			}
-		}
-		window.clear();
-		window.display();
-	}
-	return 0;
+    RenderWindow window(VideoMode(640, 480), "Game");
+    Event event;
+    while (window.isOpen()) {
+        while (window.pollEvent(event)) {
+            switch (event.type) {
+            case sf::Event::Closed:
+                window.close();
+                break;
+            case sf::Event::KeyPressed:
+                if (event.key.code == sf::Keyboard::Escape) {
+                    window.close();
+                }
+                break;
+            }
+        }
+        // Очищаем экран
+        window.clear(Color::Black);
+
+        // Генерация карты
+        Dungeon dungeon(20, 15);
+        dungeon.generate();
+
+        // Получаем карту
+        vector<vector<char>> map = dungeon.getMap();
+
+        // Отрисовка карты
+        for (int y = 0; y < dungeon.getHeight(); y++) {
+            for (int x = 0; x < dungeon.getWidth(); x++) {
+                // Определяем тип тайла
+                switch (map[y][x]) {
+                case '#': // Стена
+                    wallSprite.setPosition(x * 32, y * 32);
+                    window.draw(wallSprite);
+                    break;
+                case '.': // Пол
+                    floorSprite.setPosition(x * 32, y * 32);
+                    window.draw(floorSprite);
+                    bI: // Предмет
+                        itemSprite.setPosition(x * 32, y * 32);
+                    window.draw(itemSprite);
+                    break;
+                }
+            }
+        }
+
+        // Отрисовка игрока
+        player.getShape().setPosition(player.getX() * 32, player.getY() * 32);
+        window.draw(player.getShape());
+
+        window.display();
+    }
+    return 0;
 }
