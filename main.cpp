@@ -8,6 +8,7 @@
 #include <vector>
 #include <conio.h>
 #include <ctime>
+#include <fstream>
 using namespace std;
 using namespace sf;
 
@@ -473,8 +474,10 @@ int main() {
     //Создание основных объектов
     // Создание объекта игрока
     Player player(100, 20, 5, 0, 1, true, 1, 1);
-
-
+    // Создаем объект подземелья 
+    Dungeon dungeon(20, 15); // Например, 20x15 клеток
+    dungeon.generate();
+    vector<vector<char>> dungeonMap = dungeon.getMap();
 
 
 
