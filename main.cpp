@@ -7,6 +7,7 @@
 #include <random>
 #include <vector>
 #include <conio.h>
+#include <queue>
 #include <ctime>
 #include <fstream>
 using namespace std;
@@ -257,7 +258,7 @@ private:
                     int liveNeighbours = countLiveNeighbours(x, y);
 
                     // Применяем правила клеточного автомата
-                    if (map[y][x] == '#' && (liveNeighbours < 0 || liveNeighbours > 6)) {
+                    if (map[y][x] == '#' && (liveNeighbours < 0 || liveNeighbours > 5)) {
                         tempMap[y][x] = '.'; // Умирает
                     }
                     else if (map[y][x] == '.' && liveNeighbours == 3) {
@@ -373,26 +374,7 @@ private:
         }
     }
 
-public:
-    Dungeon(int w, int h) : width(w), height(h) {
-        map.resize(height, vector<char>(width, '#'));
-    }
 
-    // Геттеры
-    int getWidth() {
-        return width;
-    }
-    int getHeight() {
-        return height;
-    }
-
-    // Сеттеры
-    void setWidth(int a) {
-        width = a;
-    }
-    void setHeight(int a) {
-        height = a;
-    }
 
     // Создаем коридоры между комнатами (горизонтальные)
     void createPredefinedCorridors() {
@@ -409,14 +391,27 @@ public:
 
     // Создаем коридоры между комнатами (вертикальные)
     void createPredefinedCorridors2() {
-        for (int x = 0; x < width; x += 2) {
-            for (int y = 0; y < height; y++) {
-                if (y % 10 == 0 && map[y][x] == '#' && map[y + 1][x] == '#') {
-                    map[y][x] = '.';
-                    map[y + 1][x] = '.';
-                    y += 2; // Переходим к следующей "паре" клеток
-                }
-            }
+        int r = random(1, height);
+        for (int x = 0; x < width; x++) {
+            map[r][x] = '.';
+        }
+    }
+    void createPredefinedCorridors3() {
+        int r = random(1, height);
+        for (int x = 0; x < width; x++) {
+            map[r][x] = '.';
+        }
+    }
+    void createPredefinedCorridors4() {
+        int r = random(1, height);
+        for (int x = 0; x < width; x++) {
+            map[r][x] = '.';
+        }
+    }
+    void createPredefinedCorridors5() {
+        int r = random(1, width);
+        for (int x = 0; x < height; x++) {
+            map[x][r] = '.';
         }
     }
 
@@ -427,24 +422,108 @@ public:
         createRoom(width - 6, height - 6, 8, 8); // Комната 3
     }
 
+    bool isPathBetweenStairs(int stairUpX, int stairUpY, int stairDownX, int stairDownY) {
+        // Реализуй поиск в ширину (BFS) или другой алгоритм поиска пути
+        // Используй map для проверки, доступна ли клетка для прохода
+        // Возвращай true, если найден путь, и false, если нет пути
+        // Создаем очередь для поиска в ширину (BFS)
+        queue<pair<int, int>> queue;
+        // Добавляем начальную клетку "stairUp" в очередь
+        queue.push(make_pair(stairUpX, stairUpY));
+
+        // Создаем массив посещенных клеток
+        vector<vector<bool>> visited(height, vector<bool>(width, false));
+        // Помечаем стартовую клетку как посещенную
+        visited[stairUpY][stairUpX] = true;
+
+        // Пока очередь не пуста
+        while (!queue.empty()) {
+            // Извлекаем клетку из очереди
+            pair<int, int> current = queue.front();
+            queue.pop();
+
+            // Если мы добрались до "stairDown" - путь найден
+            if (current.first == stairDownX && current.second == stairDownY) {
+                return true;
+            }
+
+            // Проверяем соседние клетки
+            int dx[] = { 0, 1, 0, -1 }; //  Горизонтальные смещения
+            int dy[] = { 1, 0, -1, 0 }; // Вертикальные смещения
+
+            for (int i = 0; i < 4; ++i) {
+                int nextX = current.first + dx[i];
+                int nextY = current.second + dy[i];
+
+                // Проверяем, находится ли соседняя клетка в пределах карты
+                if (nextX >= 0 && nextX < width && nextY >= 0 && nextY < height) {
+                    // Проверяем, доступна ли соседняя клетка (проход или лестница)
+                    if (map[nextY][nextX] == '.' || map[nextY][nextX] == 'U' || map[nextY][nextX] == 'D') {
+                        // Если клетка не посещена - добавляем ее в очередь
+                        if (!visited[nextY][nextX]) {
+                            queue.push(make_pair(nextX, nextY));
+                            visited[nextY][nextX] = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Если очередь опустела, не найдя "stairDown" - пути нет
+        return false;
+    }
+
 public:
     Dungeon(int w, int h) : width(w), height(h) {
         map.resize(height, vector<char>(width, '#'));
     }
+    // Геттеры
+    int getWidth() {
+        return width;
+    }
+    int getHeight() {
+        return height;
+    }
 
+    // Сеттеры
+    void setWidth(int a) {
+        width = a;
+    }
+    void setHeight(int a) {
+        height = a;
+    }
     // Генерация подземелья
     void generate() {
         // Используем клеточный автомат для базовой генерации
         generateCellularAutomaton(10); // 10 итераций
         createPredefinedRooms();
         createPredefinedCorridors();
-        createPredefinedCorridors2(); // Добавляем вертикальные коридоры
+        createPredefinedCorridors2();
+        createPredefinedCorridors3();
+        createPredefinedCorridors4();
+        createPredefinedCorridors5();// Добавляем вертикальные коридоры
         createCorridorsBetweenRooms();
+
+        int stairUpX = random(1, width - 1);
+        int stairUpY = random(1, height - 1);
+        map[stairUpY][stairUpX] = 'U';
+
+        int stairDownX = random(1, width - 1);
+        int stairDownY = random(1, height - 1);
+        map[stairDownY][stairDownX] = 'D';
+
+        // Проверяем, есть ли проход между ними
+        while (!isPathBetweenStairs(stairUpX, stairUpY, stairDownX, stairDownY)) {
+            // Если нет, переносим "stairDown" в другое место
+            stairDownX = random(1, width - 1);
+            stairDownY = random(1, height - 1);
+            map[stairDownY][stairDownX] = 'D';
+        }
         //раскид предметов
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 if (map[y][x] == '.') { // Если клетка пустая
-                    if (random(1, 30) == 5) {
+                    if (random(1, 50) == 5) {
                         map[y][x] = 'I';
                     }
                 }
@@ -497,7 +576,7 @@ int main() {
     // ===============================================================================
     // Создание массива врагов
     vector<Enemy*> enemies;
-    // Слабые противники 1 - 8
+    // Слабые противники 1 - 9
     enemies.push_back(new Enemy("Крыса", 20, 5, 10, 2, 2));
     enemies.push_back(new Enemy("Паук", 15, 3, 8, 4, 4));
     enemies.push_back(new Enemy("Гоблин", 25, 7, 15, 6, 3));
@@ -508,7 +587,7 @@ int main() {
     enemies.push_back(new Enemy("Бандит", 32, 18, 22, 4, 1));
     enemies.push_back(new Enemy("Бешеный волк", 45, 15, 28, 6, 4));
 
-    // Средние противники
+    // Средние противники 10 - 20
     enemies.push_back(new Enemy("Зомби", 50, 25, 35, 8, 3));
     enemies.push_back(new Enemy("Огр", 60, 25, 40, 10, 2));
     enemies.push_back(new Enemy("Тролль", 70, 30, 50, 5, 2));
@@ -520,7 +599,7 @@ int main() {
     enemies.push_back(new Enemy("Демон", 75, 45, 65, 5, 4));
     enemies.push_back(new Enemy("Призрак", 40, 10, 30, 2, 1));
 
-    // Сильные противники
+    // Сильные противники 21 - 30
     enemies.push_back(new Enemy("Ледяной голем", 120, 60, 100, 4, 2));
     enemies.push_back(new Enemy("Огненный демон", 110, 70, 90, 6, 5));
     enemies.push_back(new Enemy("Гидра", 150, 80, 120, 8, 2));
@@ -534,6 +613,10 @@ int main() {
     // ==================================================================\
 
     //Создание основных объектов
+    //Отрисовка окна
+    RenderWindow window(VideoMode(50 * 32, 30 * 32), "Game");
+    window.setFramerateLimit(60);
+
     // Создание объекта игрока
     Player player(100, 20, 5, 0, 1, true, 1, 1);
 
@@ -541,6 +624,56 @@ int main() {
     Dungeon dungeon(50, 30);
     dungeon.generate();
 
+
+
+    // ==================================================================
+    // Создаем фон для интерфейса
+    RectangleShape interfaceBackground(Vector2f(150, window.getSize().y));
+    interfaceBackground.setFillColor(Color(0, 0, 0, 150)); // Полупрозрачный черный
+    interfaceBackground.setPosition(window.getSize().x - interfaceBackground.getSize().x, 0);
+    // Создаем текст для имени игрока
+    Font font;
+    if (!font.loadFromFile("fonts/arial.ttf")) {
+        cout << "Ошибка загрузки шрифта: arial.ttf" << endl;
+        return 1;
+    }
+    Text playerNameText("Name: ", font, 16);
+    playerNameText.setFillColor(Color::White);
+    playerNameText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 10);
+
+    // Создаем текст для характеристики "Здоровье"
+    Text healthText("Health: ", font, 16);
+    healthText.setFillColor(Color::White);
+    healthText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 40);
+
+    // Создаем текст для характеристики "Сила"
+    Text strengthText("Strenght: ", font, 16);
+    strengthText.setFillColor(Color::White);
+    strengthText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 70);
+
+    // Создаем текст для характеристики "Защита"
+    Text defenseText("Defense: ", font, 16);
+    defenseText.setFillColor(Color::White);
+    defenseText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 100);
+
+    // Создаем текст для уровня
+    Text levelText("Level: ", font, 16);
+    levelText.setFillColor(Color::White);
+    levelText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 130);
+
+    // Создаем текст для оружия
+    Text weaponText("Weapon: ", font, 16);
+    weaponText.setFillColor(Color::White);
+    weaponText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 160);
+
+    // Создаем текст для уровня подземелья
+    Text dungeonLevelText("Dungeon Level: 1", font, 16); // Начальный уровень 1
+    dungeonLevelText.setFillColor(Color::White);
+    dungeonLevelText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 190);
+    
+
+
+    bool interfaceVisible = false;
 
     // ==================================================================
     // Создаем спрайты для символов
@@ -573,14 +706,27 @@ int main() {
         cout << "Ошибка загрузки изображения: item.png" << endl;
         return 1;
     }
+
+    Texture stairUpTexture;
+    if (!stairUpTexture.loadFromFile("textures/stairUp.png")) {
+        cout << "Ошибка загрузки изображения" << endl;
+    }
+    Sprite stairUpSprite(stairUpTexture);
+    stairUpSprite.setTextureRect(IntRect(0, 0, 32, 32));
+
+    Texture stairDownTexture;
+    if (!stairDownTexture.loadFromFile("textures/stairDown.png")) {
+        cout << "Ошибка загрузки изображения" << endl;
+    }
+    Sprite stairDownSprite(stairDownTexture);
+    stairDownSprite.setTextureRect(IntRect(0, 0, 32, 32));
+
     Sprite itemSprite(itemTexture);
     itemSprite.setTextureRect(IntRect(0, 0, 32, 32)); // Размер тайла 
 
     // ==================================================================\
-    //Отрисовка окна
 
-    RenderWindow window(VideoMode(50*32, 30*32), "Game");
-    window.setFramerateLimit(60);
+
     Event event;
     while (window.isOpen()) {
         while (window.pollEvent(event)) {
@@ -594,7 +740,13 @@ int main() {
                 }
                 break;
             }
+            if (event.type == sf::Event::KeyPressed) {
+                if (event.key.code == sf::Keyboard::Tab) {
+            interfaceVisible = !interfaceVisible; // Переключаем видимость
         }
+    }
+}
+    
         // Очищаем экран
         window.clear(Color::Black);
 
@@ -621,6 +773,15 @@ int main() {
                 case 'I': //Предмет
                     itemSprite.setPosition(x * 32, y * 32);
                     window.draw(itemSprite);
+                    break;
+                case 'U': // StairUp
+                    stairUpSprite.setPosition(x * 32, y * 32);
+                    window.draw(stairUpSprite);
+                    break;
+                case 'D': // StairDown
+                    stairDownSprite.setPosition(x * 32, y * 32);
+                    window.draw(stairDownSprite);
+                    break;
                 }
             }
         }
@@ -637,9 +798,42 @@ int main() {
             wallSprite.setPosition(x * 32, (dungeon.getHeight() - 1) * 32);
             window.draw(wallSprite);
         }
-        // Отрисовка игрока
-        player.getShape().setPosition(player.getX() * 32, player.getY() * 32);
-        window.draw(player.getShape());
+        // Обновляем текст с характеристиками игрока
+        healthText.setString("Здоровье: " + to_string(player.getHealth()));
+        strengthText.setString("Сила: " + to_string(player.getStrength()));
+        defenseText.setString("Защита: " + to_string(player.getDefense()));
+        levelText.setString("Уровень: " + to_string(player.getLevel()));
+
+        if (interfaceVisible) {
+            // Выдвигаем интерфейс
+            interfaceBackground.setPosition(window.getSize().x - interfaceBackground.getSize().x, 0);
+            playerNameText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 10);
+            healthText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 40);
+            strengthText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 70);
+            defenseText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 100);
+            levelText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 130);
+            weaponText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 160);
+            dungeonLevelText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 190);
+            window.draw(interfaceBackground);
+            window.draw(playerNameText);
+            window.draw(healthText);
+            window.draw(strengthText);
+            window.draw(defenseText);
+            window.draw(levelText);
+            window.draw(weaponText);
+            window.draw(dungeonLevelText);
+        }
+        else {
+            // Сдвигаем интерфейс за край экрана
+            interfaceBackground.setPosition(window.getSize().x, 0);
+            playerNameText.setPosition(window.getSize().x + 10, 10);
+            healthText.setPosition(window.getSize().x + 10, 40);
+            strengthText.setPosition(window.getSize().x + 10, 70);
+            defenseText.setPosition(window.getSize().x + 10, 100);
+            levelText.setPosition(window.getSize().x + 10, 130);
+            weaponText.setPosition(window.getSize().x + 10, 160);
+            dungeonLevelText.setPosition(window.getSize().x + 10, 190);
+        }
 
         window.display();
     }
