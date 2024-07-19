@@ -13,6 +13,9 @@
 using namespace std;
 using namespace sf;
 
+Dungeon dungeon(50, 30);
+vector<Enemy*> enemies;
+
 // Класс игрока
 class Player {
 private:
@@ -22,7 +25,6 @@ private:
     int defense;  // Защита игрока, снижает получаемый урон
     int level; // Уровень
     bool life;
-    RectangleShape shape; // Форма игрока для отрисовки
     int x, y; // Координаты игрока
 public:
     // Конструктор: Инициализирует характеристики при создании объекта Player
@@ -36,7 +38,6 @@ public:
     int getDefense() const { return defense; }
     int getLevel() const { return level; }
     bool getLife() const { return life; }
-    RectangleShape getShape() const { return shape; }
     int getX() const { return x; }
     int getY() const { return y; }
 
@@ -49,7 +50,14 @@ public:
     void setLife(bool newLife) { life = newLife; }
     void setPosition(int xCoord, int yCoord) {
     }
-
+    void move(int dx, int dy) {
+        // Проверяем, не стена ли там
+        if (dungeon.getMap()[y + dy][x + dx] != '#') {
+            // Перемещаем героя
+            x += dx;
+            y += dy;
+        }
+    }
     // Метод для получения урона
     void takeDamage(int damage) {
         health -= (damage - defense);  // Учитываем защиту при получении урона
@@ -419,7 +427,7 @@ private:
     void createPredefinedRooms() {
         createRoom(2, 2, 10, 9); //  Комната 1
         createRoom(width / 2 - 3, height / 2 - 3, 10, 10); // Комната 2
-        createRoom(width - 6, height - 6, 8, 8); // Комната 3
+        createRoom(width - 6, height - 6, 12, 13); // Комната 3
     }
 
     bool isPathBetweenStairs(int stairUpX, int stairUpY, int stairDownX, int stairDownY) {
@@ -492,6 +500,23 @@ public:
     void setHeight(int a) {
         height = a;
     }
+    void update() {
+        // Перемещение врагов
+        moveEnemies();
+    }
+    void moveEnemies() {
+        for (auto enemy : enemies) {
+            // Генерируем случайное направление
+            int dx = (rand() % 3) - 1;
+            int dy = (rand() % 3) - 1;
+
+            // Проверяем, можно ли переместиться
+            if (dungeon.getMap()[enemy->getY() + dy][enemy->getX() + dx] != '#') {
+                // Перемещаем врага
+                enemy->setPosition(enemy->getX() + dx, enemy->getY() + dy);
+            }
+        }
+    }
     // Генерация подземелья
     void generate() {
         // Используем клеточный автомат для базовой генерации
@@ -538,9 +563,6 @@ public:
 };
 
 
-
-
-
 int main() {
 
     // Установка региональных настроек для русского языка
@@ -575,7 +597,6 @@ int main() {
 
     // ===============================================================================
     // Создание массива врагов
-    vector<Enemy*> enemies;
     // Слабые противники 1 - 9
     enemies.push_back(new Enemy("Крыса", 20, 5, 10, 2, 2));
     enemies.push_back(new Enemy("Паук", 15, 3, 8, 4, 4));
@@ -621,10 +642,8 @@ int main() {
     Player player(100, 20, 5, 0, 1, true, 1, 1);
 
     // Генерация карты
-    Dungeon dungeon(50, 30);
+    
     dungeon.generate();
-
-
 
     // ==================================================================
     // Создаем фон для интерфейса
@@ -670,7 +689,7 @@ int main() {
     Text dungeonLevelText("Dungeon Level: 1", font, 16); // Начальный уровень 1
     dungeonLevelText.setFillColor(Color::White);
     dungeonLevelText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 190);
-    
+
 
 
     bool interfaceVisible = false;
@@ -724,6 +743,14 @@ int main() {
     Sprite itemSprite(itemTexture);
     itemSprite.setTextureRect(IntRect(0, 0, 32, 32)); // Размер тайла 
 
+    Texture playerTexture;
+    if (!playerTexture.loadFromFile("textures/player.png")) {
+        cout<< "Ошибка загрузки спрайта игрока!" << endl;
+        return 1;
+    }
+    Sprite playerSprite(playerTexture);
+    playerSprite.setTextureRect( IntRect(0, 0, 32, 32));
+
     // ==================================================================\
 
 
@@ -731,111 +758,146 @@ int main() {
     while (window.isOpen()) {
         while (window.pollEvent(event)) {
             switch (event.type) {
-            case sf::Event::Closed:
+            case  Event::Closed:
                 window.close();
                 break;
-            case sf::Event::KeyPressed:
-                if (event.key.code == sf::Keyboard::Escape) {
+            case  Event::KeyPressed:
+                if (event.key.code == Keyboard::Escape) {
                     window.close();
                 }
                 break;
             }
-            if (event.type == sf::Event::KeyPressed) {
-                if (event.key.code == sf::Keyboard::Tab) {
-            interfaceVisible = !interfaceVisible; // Переключаем видимость
-        }
-    }
-}
-    
-        // Очищаем экран
-        window.clear(Color::Black);
-
-
-
-        // Получаем карту
-        vector<vector<char>> map = dungeon.getMap();
-
-
-
-        // Отрисовка карты
-        for (int y = 0; y < dungeon.getHeight(); y++) {
-            for (int x = 0; x < dungeon.getWidth(); x++) {
-                // Определяем тип тайла
-                switch (map[y][x]) {
-                case '#': // Стена
-                    wallSprite.setPosition(x * 32, y * 32);
-                    window.draw(wallSprite);
-                    break;
-                case '.': // Пол
-                    floorSprite.setPosition(x * 32, y * 32);
-                    window.draw(floorSprite);
-                    break;
-                case 'I': //Предмет
-                    itemSprite.setPosition(x * 32, y * 32);
-                    window.draw(itemSprite);
-                    break;
-                case 'U': // StairUp
-                    stairUpSprite.setPosition(x * 32, y * 32);
-                    window.draw(stairUpSprite);
-                    break;
-                case 'D': // StairDown
-                    stairDownSprite.setPosition(x * 32, y * 32);
-                    window.draw(stairDownSprite);
-                    break;
+            if (event.type == Event::KeyPressed) {
+                if (event.key.code == Keyboard::Tab) {
+                    interfaceVisible = !interfaceVisible; // Переключаем видимость
                 }
             }
+            if (Keyboard::isKeyPressed(Keyboard::Up)) {
+                player.move(0, -1);
+            }
+            if (Keyboard::isKeyPressed(Keyboard::Down)) {
+                player.move(0, +1);
+            }
+            if (Keyboard::isKeyPressed(Keyboard::Left)) {
+                player.move(-1, 0);
+            }
+            if (Keyboard::isKeyPressed(Keyboard::Right)) {
+                player.move(+1, 0);
+            }
         }
-        // Отрисовка границ
-        for (int y = 0; y < dungeon.getHeight(); y++) {
-            wallSprite.setPosition(0, y * 32);
-            window.draw(wallSprite);
-            wallSprite.setPosition((dungeon.getWidth() - 1) * 32, y * 32);
-            window.draw(wallSprite);
+        // Обработка нажатия клавиш
+        
+            // Очищаем экран
+            window.clear(Color::Black);
+            // Обновление карты
+            dungeon.update();
+            // Получаем карту
+            vector<vector<char>> map = dungeon.getMap();
+            // Ищем лестницу вверх
+            for (int y = 0; y < dungeon.getHeight(); y++) {
+                for (int x = 0; x < dungeon.getWidth(); x++) {
+                    if (map[y][x] == 'U') {
+                        player.setPosition(x, y); // Устанавливаем позицию игрока
+                        playerSprite.setPosition(x * 32, y * 32);// Устанавливаем позицию спрайта
+                        break; // Выходим из цикла, как только нашли лестницу
+                    }
+                }
+            }
+            if (Keyboard::isKeyPressed(Keyboard::Up)) {
+                player.setPosition(player.getX(), player.getY() - 1);
+            }
+            else if (Keyboard::isKeyPressed(Keyboard::Down)) {
+                player.setPosition(player.getX(), player.getY() + 1);
+            }
+            else if (Keyboard::isKeyPressed(Keyboard::Left)) {
+                player.setPosition(player.getX() - 1, player.getY());
+            }
+            else if (Keyboard::isKeyPressed(Keyboard::Right)) {
+                player.setPosition(player.getX() + 1, player.getY());
+            }
+            // Отрисовка карты
+            for (int y = 0; y < dungeon.getHeight(); y++) {
+                for (int x = 0; x < dungeon.getWidth(); x++) {
+                    // Определяем тип тайла
+                    switch (map[y][x]) {
+                    case '#': // Стена
+                        wallSprite.setPosition(x * 32, y * 32);
+                        window.draw(wallSprite);
+                        break;
+                    case '.': // Пол
+                        floorSprite.setPosition(x * 32, y * 32);
+                        window.draw(floorSprite);
+                        break;
+                    case 'I': //Предмет
+                        itemSprite.setPosition(x * 32, y * 32);
+                        window.draw(itemSprite);
+                        break;
+                    case 'U': // StairUp
+                        stairUpSprite.setPosition(x * 32, y * 32);
+                        window.draw(stairUpSprite);
+                        break;
+                    case 'D': // StairDown
+                        stairDownSprite.setPosition(x * 32, y * 32);
+                        window.draw(stairDownSprite);
+                        break;
+                    case 'P': // StairDown
+                        playerSprite.setPosition(x * 32, y * 32);
+                        window.draw(playerSprite);
+                        break;
+                    }
+                }
+            }
+            window.draw(playerSprite);
+            // Отрисовка границ
+            for (int y = 0; y < dungeon.getHeight(); y++) {
+                wallSprite.setPosition(0, y * 32);
+                window.draw(wallSprite);
+                wallSprite.setPosition((dungeon.getWidth() - 1) * 32, y * 32);
+                window.draw(wallSprite);
+            }
+            for (int x = 0; x < dungeon.getWidth(); x++) {
+                wallSprite.setPosition(x * 32, 0);
+                window.draw(wallSprite);
+                wallSprite.setPosition(x * 32, (dungeon.getHeight() - 1) * 32);
+                window.draw(wallSprite);
+            }
+            // Обновляем текст с характеристиками игрока
+            healthText.setString("Здоровье: " + to_string(player.getHealth()));
+            strengthText.setString("Сила: " + to_string(player.getStrength()));
+            defenseText.setString("Защита: " + to_string(player.getDefense()));
+            levelText.setString("Уровень: " + to_string(player.getLevel()));
+            if (interfaceVisible) {
+                // Выдвигаем интерфейс
+                interfaceBackground.setPosition(window.getSize().x - interfaceBackground.getSize().x, 0);
+                playerNameText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 10);
+                healthText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 40);
+                strengthText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 70);
+                defenseText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 100);
+                levelText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 130);
+                weaponText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 160);
+                dungeonLevelText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 190);
+                window.draw(interfaceBackground);
+                window.draw(playerNameText);
+                window.draw(healthText);
+                window.draw(strengthText);
+                window.draw(defenseText);
+                window.draw(levelText);
+                window.draw(weaponText);
+                window.draw(dungeonLevelText);
+            }
+            else {
+                // Сдвигаем интерфейс за край экрана
+                interfaceBackground.setPosition(window.getSize().x, 0);
+                playerNameText.setPosition(window.getSize().x + 10, 10);
+                healthText.setPosition(window.getSize().x + 10, 40);
+                strengthText.setPosition(window.getSize().x + 10, 70);
+                defenseText.setPosition(window.getSize().x + 10, 100);
+                levelText.setPosition(window.getSize().x + 10, 130);
+                weaponText.setPosition(window.getSize().x + 10, 160);
+                dungeonLevelText.setPosition(window.getSize().x + 10, 190);
+            }
+            window.display();
         }
-        for (int x = 0; x < dungeon.getWidth(); x++) {
-            wallSprite.setPosition(x * 32, 0);
-            window.draw(wallSprite);
-            wallSprite.setPosition(x * 32, (dungeon.getHeight() - 1) * 32);
-            window.draw(wallSprite);
-        }
-        // Обновляем текст с характеристиками игрока
-        healthText.setString("Здоровье: " + to_string(player.getHealth()));
-        strengthText.setString("Сила: " + to_string(player.getStrength()));
-        defenseText.setString("Защита: " + to_string(player.getDefense()));
-        levelText.setString("Уровень: " + to_string(player.getLevel()));
-
-        if (interfaceVisible) {
-            // Выдвигаем интерфейс
-            interfaceBackground.setPosition(window.getSize().x - interfaceBackground.getSize().x, 0);
-            playerNameText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 10);
-            healthText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 40);
-            strengthText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 70);
-            defenseText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 100);
-            levelText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 130);
-            weaponText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 160);
-            dungeonLevelText.setPosition(window.getSize().x - interfaceBackground.getSize().x + 10, 190);
-            window.draw(interfaceBackground);
-            window.draw(playerNameText);
-            window.draw(healthText);
-            window.draw(strengthText);
-            window.draw(defenseText);
-            window.draw(levelText);
-            window.draw(weaponText);
-            window.draw(dungeonLevelText);
-        }
-        else {
-            // Сдвигаем интерфейс за край экрана
-            interfaceBackground.setPosition(window.getSize().x, 0);
-            playerNameText.setPosition(window.getSize().x + 10, 10);
-            healthText.setPosition(window.getSize().x + 10, 40);
-            strengthText.setPosition(window.getSize().x + 10, 70);
-            defenseText.setPosition(window.getSize().x + 10, 100);
-            levelText.setPosition(window.getSize().x + 10, 130);
-            weaponText.setPosition(window.getSize().x + 10, 160);
-            dungeonLevelText.setPosition(window.getSize().x + 10, 190);
-        }
-
-        window.display();
-    }
-    return 0;
+     return 0;
 }
+
