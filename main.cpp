@@ -233,6 +233,8 @@ private:
     int height;
     int stairUpX = random(1, width - 1);
     int stairUpY = random(1, height - 1);
+    int stairDownX = random(1, width - 1);
+    int stairDownY = random(1, height - 1);
     vector<vector<char>> map;
 
     // Генерация случайного числа в заданном диапазоне
@@ -249,7 +251,7 @@ private:
         // (изменение: 60% стен вместо 40%)
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
-                if (random(0, 100) < 80) {
+                if (random(0, 100) < 83) {
                     map[y][x] = '#'; // Стена
                 }
                 else {
@@ -522,13 +524,26 @@ public:
         createPredefinedCorridors5();// Добавляем вертикальные коридоры
         createCorridorsBetweenRooms();
 
+        bool stairUpCreated = false;
+        bool stairDownCreated = false;
+        while (!stairUpCreated || !stairDownCreated) {
+            int x = random(1, width - 1);
+            int y = random(1, height - 1);
 
-        map[stairUpY][stairUpX] = 'U';
+            // Проверяем, не была ли уже создана лестница вверх
+            if (!stairUpCreated && map[y][x] == '.') {
+                map[y][x] = 'U';
+                stairUpCreated = true;
+                stairUpX = x;
+                stairUpY = y;
+            }
 
-        int stairDownX = random(1, width - 1);
-        int stairDownY = random(1, height - 1);
-        map[stairDownY][stairDownX] = 'D';
-
+            // Проверяем, не была ли уже создана лестница вниз
+            if (!stairDownCreated && map[y][x] == '.') {
+                map[y][x] = 'D';
+                stairDownCreated = true;
+            }
+        }
         // Проверяем, есть ли проход между ними
         while (!isPathBetweenStairs(stairUpX, stairUpY, stairDownX, stairDownY)) {
             // Если нет, переносим "stairDown" в другое место
@@ -823,8 +838,8 @@ int main() {
                     window.draw(itemSprite);
                     break;
                 case 'U': // StairUp
-                    stairUpSprite.setPosition(x * 32, y * 32);
-                    window.draw(stairUpSprite);
+                    floorSprite.setPosition(x * 32, y * 32);
+                    window.draw(floorSprite);
                     break;
                 case 'D': // StairDown
                     stairDownSprite.setPosition(x * 32, y * 32);
