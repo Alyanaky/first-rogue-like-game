@@ -233,8 +233,6 @@ private:
     int height;
     int stairUpX = random(1, width - 1);
     int stairUpY = random(1, height - 1);
-    int stairDownX = random(1, height - 1);
-    int stairDownY = random(1, height - 1);
     vector<vector<char>> map;
 
     // Генерация случайного числа в заданном диапазоне
@@ -436,40 +434,6 @@ private:
         createRoom(width - 6, height - 6, 12, 13); // Комната 3
     }
 
-
-
-public:
-    Dungeon(int w, int h) : width(w), height(h) {
-        map.resize(height, vector<char>(width, '#'));
-    }
-    // Геттеры
-    int getWidth() {
-        return width;
-    }
-    int getHeight() {
-        return height;
-    }
-    int getUpstairX() {
-        return stairUpX;
-    }
-    int getUpstairY() {
-        return stairUpY;
-    }
-    int getDownstairX() {
-        return stairDownX;
-    }
-    int getDownstairY() {
-        return stairDownY;
-    }
-
-    // Сеттеры
-    void setWidth(int a) {
-        width = a;
-    }
-    void setHeight(int a) {
-        height = a;
-    }
-    /*
     bool isPathBetweenStairs(int stairUpX, int stairUpY, int stairDownX, int stairDownY) {
         // Реализуй поиск в ширину (BFS) или другой алгоритм поиска пути
         // Используй map для проверки, доступна ли клетка для прохода
@@ -520,8 +484,32 @@ public:
         // Если очередь опустела, не найдя "stairDown" - пути нет
         return false;
     }
-    */
-    
+
+public:
+    Dungeon(int w, int h) : width(w), height(h) {
+        map.resize(height, vector<char>(width, '#'));
+    }
+    // Геттеры
+    int getWidth() {
+        return width;
+    }
+    int getHeight() {
+        return height;
+    }
+
+    // Сеттеры
+    void setWidth(int a) {
+        width = a;
+    }
+    void setHeight(int a) {
+        height = a;
+    }
+    int getUpstairX() {
+        return stairUpX;
+    }
+    int getUpstairY() {
+        return stairUpY;
+    }
     // Генерация подземелья
     void generate(int level) {
         // Используем клеточный автомат для базовой генерации
@@ -542,12 +530,12 @@ public:
         map[stairDownY][stairDownX] = 'D';
 
         // Проверяем, есть ли проход между ними
-      /*  while (!isPathBetweenStairs(stairUpX, stairUpY, stairDownX, stairDownY)) {
+        while (!isPathBetweenStairs(stairUpX, stairUpY, stairDownX, stairDownY)) {
             // Если нет, переносим "stairDown" в другое место
             stairDownX = random(1, width - 1);
             stairDownY = random(1, height - 1);
             map[stairDownY][stairDownX] = 'D';
-        }*/
+        }
         //раскид предметов
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
@@ -562,9 +550,8 @@ public:
     }
 
     // Метод для получения карты подземелья
-    vector<vector<char>> getMap(){
-    return map;
-    }
+    vector<vector<char>> getMap() { return map; }
+    // Размещаем случайные предметы
 
 };
 
@@ -646,11 +633,8 @@ int main() {
     window.setFramerateLimit(60);
     // Генерация карты
     Dungeon dungeon(50, 30);
+    dungeon.generate(1);
     int currentLevel = 1;
-    //while (dungeon.isPathBetweenStairs(dungeon.getUpstairX(), dungeon.getUpstairY(), dungeon.getDownstairX(), dungeon.getDownstairY())) {
-        dungeon.generate(currentLevel);
-    //}
-
     // Создание объекта игрока
     Player player(100, 20, 5, 0, 1, true, dungeon.getUpstairX(), dungeon.getUpstairY());
 
@@ -808,11 +792,9 @@ int main() {
                 // Переход на следующий уровень
                 currentLevel++;
 
-                /*/ Генерируем новый уровень
-                while (dungeon.isPathBetweenStairs(dungeon.getUpstairX(), dungeon.getUpstairY(), dungeon.getDownstairX(), dungeon.getDownstairY())) {
-                    dungeon.generate(currentLevel);
-                }
-                */
+                // Генерируем новый уровень
+                dungeon.generate(currentLevel);
+
                 // Перемещаем игрока на новый уровень
                 player.setPosition(dungeon.getUpstairX(), dungeon.getUpstairY());
             }
@@ -841,8 +823,8 @@ int main() {
                     window.draw(itemSprite);
                     break;
                 case 'U': // StairUp
-                    floorSprite.setPosition(x * 32, y * 32);
-                    window.draw(floorSprite);
+                    stairUpSprite.setPosition(x * 32, y * 32);
+                    window.draw(stairUpSprite);
                     break;
                 case 'D': // StairDown
                     stairDownSprite.setPosition(x * 32, y * 32);
@@ -907,3 +889,4 @@ int main() {
     }
     return 0;
 }
+
