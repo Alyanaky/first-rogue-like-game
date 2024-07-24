@@ -13,8 +13,8 @@
 using namespace std;
 using namespace sf;
 
-Dungeon dungeon(50, 30);
-vector<Enemy*> enemies;
+
+
 
 // Класс игрока
 class Player {
@@ -50,20 +50,22 @@ public:
     void setLife(bool newLife) { life = newLife; }
     void setPosition(int xCoord, int yCoord) {
     }
-    void move(int dx, int dy) {
-        // Проверяем, не стена ли там
-        if (dungeon.getMap()[y + dy][x + dx] != '#') {
-            // Перемещаем героя
-            x += dx;
-            y += dy;
-        }
-    }
     // Метод для получения урона
     void takeDamage(int damage) {
         health -= (damage - defense);  // Учитываем защиту при получении урона
         if (health <= 0) {
             life = false;
             // Здесь можно добавить логику окончания игры
+        }
+    }
+    void move(int dx, int dy, const vector<vector<char>>& map) {
+        if (x + dx < 1 || x + dx >= map[0].size() ||
+            y + dy < 1 || y + dy >= map.size()) {
+            return; // Блокируем движение
+        }
+        if (map[y + dy][x + dx] != '#') {
+            x += dx;
+            y += dy;
         }
     }
 };
@@ -229,6 +231,8 @@ class Dungeon {
 private:
     int width;
     int height;
+    int stairUpX = random(1, width - 1);
+    int stairUpY = random(1, height - 1);
     vector<vector<char>> map;
 
     // Генерация случайного числа в заданном диапазоне
@@ -238,7 +242,7 @@ private:
         uniform_int_distribution<> distrib(min, max);
         return distrib(gen);
     }
-
+    
     // Алгоритм клеточного автомата
     void generateCellularAutomaton(int iterations) {
         // Заполняем карту случайными клетками (стенa/пол)
@@ -425,7 +429,7 @@ private:
 
     // Создаем комнаты (просто прямоугольники)
     void createPredefinedRooms() {
-        createRoom(2, 2, 10, 9); //  Комната 1
+        createRoom(2, 2, 10, 12); //  Комната 1
         createRoom(width / 2 - 3, height / 2 - 3, 10, 10); // Комната 2
         createRoom(width - 6, height - 6, 12, 13); // Комната 3
     }
@@ -500,22 +504,11 @@ public:
     void setHeight(int a) {
         height = a;
     }
-    void update() {
-        // Перемещение врагов
-        moveEnemies();
+    int getUpstairX() {
+        return stairUpX;
     }
-    void moveEnemies() {
-        for (auto enemy : enemies) {
-            // Генерируем случайное направление
-            int dx = (rand() % 3) - 1;
-            int dy = (rand() % 3) - 1;
-
-            // Проверяем, можно ли переместиться
-            if (dungeon.getMap()[enemy->getY() + dy][enemy->getX() + dx] != '#') {
-                // Перемещаем врага
-                enemy->setPosition(enemy->getX() + dx, enemy->getY() + dy);
-            }
-        }
+    int getUpstairY() {
+        return stairUpY;
     }
     // Генерация подземелья
     void generate() {
@@ -529,8 +522,7 @@ public:
         createPredefinedCorridors5();// Добавляем вертикальные коридоры
         createCorridorsBetweenRooms();
 
-        int stairUpX = random(1, width - 1);
-        int stairUpY = random(1, height - 1);
+
         map[stairUpY][stairUpX] = 'U';
 
         int stairDownX = random(1, width - 1);
@@ -554,6 +546,7 @@ public:
                 }
             }
         }
+        
     }
 
     // Метод для получения карты подземелья
@@ -597,6 +590,7 @@ int main() {
 
     // ===============================================================================
     // Создание массива врагов
+    vector<Enemy*> enemies;
     // Слабые противники 1 - 9
     enemies.push_back(new Enemy("Крыса", 20, 5, 10, 2, 2));
     enemies.push_back(new Enemy("Паук", 15, 3, 8, 4, 4));
@@ -637,13 +631,14 @@ int main() {
     //Отрисовка окна
     RenderWindow window(VideoMode(50 * 32, 30 * 32), "Game");
     window.setFramerateLimit(60);
-
-    // Создание объекта игрока
-    Player player(100, 20, 5, 0, 1, true, 1, 1);
-
     // Генерация карты
-    
+    Dungeon dungeon(50, 30);
     dungeon.generate();
+    // Создание объекта игрока
+    Player player(100, 20, 5, 0, 1, true, dungeon.getUpstairX(), dungeon.getUpstairY());
+
+
+
 
     // ==================================================================
     // Создаем фон для интерфейса
@@ -772,49 +767,33 @@ int main() {
                     interfaceVisible = !interfaceVisible; // Переключаем видимость
                 }
             }
-            if (Keyboard::isKeyPressed(Keyboard::Up)) {
-                player.move(0, -1);
+            if (event.type == Event::KeyPressed) {
+                if (event.key.code == Keyboard::Up) {
+                    player.move(0, -1, dungeon.getMap());
+                }
             }
-            if (Keyboard::isKeyPressed(Keyboard::Down)) {
-                player.move(0, +1);
+            if (event.type == Event::KeyPressed) {
+                if (event.key.code == Keyboard::Down) {
+                    player.move(0, +1, dungeon.getMap());
+                }
             }
-            if (Keyboard::isKeyPressed(Keyboard::Left)) {
-                player.move(-1, 0);
+            if (event.type == Event::KeyPressed) {
+                if (event.key.code == Keyboard::Left) {
+                    player.move(-1, 0, dungeon.getMap());
+                }
             }
-            if (Keyboard::isKeyPressed(Keyboard::Right)) {
-                player.move(+1, 0);
+            if (event.type == Event::KeyPressed) {
+                if (event.key.code == Keyboard::Right) {
+                    player.move(+1, 0, dungeon.getMap());
+                }
             }
         }
         // Обработка нажатия клавиш
         
             // Очищаем экран
             window.clear(Color::Black);
-            // Обновление карты
-            dungeon.update();
             // Получаем карту
             vector<vector<char>> map = dungeon.getMap();
-            // Ищем лестницу вверх
-            for (int y = 0; y < dungeon.getHeight(); y++) {
-                for (int x = 0; x < dungeon.getWidth(); x++) {
-                    if (map[y][x] == 'U') {
-                        player.setPosition(x, y); // Устанавливаем позицию игрока
-                        playerSprite.setPosition(x * 32, y * 32);// Устанавливаем позицию спрайта
-                        break; // Выходим из цикла, как только нашли лестницу
-                    }
-                }
-            }
-            if (Keyboard::isKeyPressed(Keyboard::Up)) {
-                player.setPosition(player.getX(), player.getY() - 1);
-            }
-            else if (Keyboard::isKeyPressed(Keyboard::Down)) {
-                player.setPosition(player.getX(), player.getY() + 1);
-            }
-            else if (Keyboard::isKeyPressed(Keyboard::Left)) {
-                player.setPosition(player.getX() - 1, player.getY());
-            }
-            else if (Keyboard::isKeyPressed(Keyboard::Right)) {
-                player.setPosition(player.getX() + 1, player.getY());
-            }
             // Отрисовка карты
             for (int y = 0; y < dungeon.getHeight(); y++) {
                 for (int x = 0; x < dungeon.getWidth(); x++) {
@@ -839,10 +818,6 @@ int main() {
                     case 'D': // StairDown
                         stairDownSprite.setPosition(x * 32, y * 32);
                         window.draw(stairDownSprite);
-                        break;
-                    case 'P': // StairDown
-                        playerSprite.setPosition(x * 32, y * 32);
-                        window.draw(playerSprite);
                         break;
                     }
                 }
@@ -896,6 +871,8 @@ int main() {
                 weaponText.setPosition(window.getSize().x + 10, 160);
                 dungeonLevelText.setPosition(window.getSize().x + 10, 190);
             }
+            playerSprite.setPosition(player.getX() * 32, player.getY() * 32);
+            window.draw(playerSprite);
             window.display();
         }
      return 0;
