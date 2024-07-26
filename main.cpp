@@ -60,13 +60,12 @@ public:
     }
     void move(int dx, int dy, const vector<vector<char>>& map) {
         if (x + dx < 1 || x + dx >= map[0].size() ||
-            y + dy < 1 || y + dy >= map.size()) {
+            y + dy < 1 || y + dy >= map.size() ||
+            map[y + dy][x + dx] == '#') {
             return; // Блокируем движение
         }
-        if (map[y + dy][x + dx] != '#') {
-            x += dx;
-            y += dy;
-        }
+        x += dx;
+        y += dy;
     }
 };
 
@@ -555,7 +554,7 @@ public:
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 if (map[y][x] == '.') { // Если клетка пустая
-                    if (random(1, 50) == 5) {
+                    if (random(1, 75) == 5) {
                         map[y][x] = 'I';
                     }
                 }
@@ -768,39 +767,37 @@ int main() {
     Event event;
     while (window.isOpen()) {
         while (window.pollEvent(event)) {
-            switch (event.type) {
-            case  Event::Closed:
-                window.close();
-                break;
-            case  Event::KeyPressed:
-                if (event.key.code == Keyboard::Escape) {
-                    window.close();
-                }
-                break;
-            }
             if (event.type == Event::KeyPressed) {
+                // Движение по нампаду
+                if (event.key.code == Keyboard::Numpad7) {
+                    player.move(-1, -1, dungeon.getMap()); // Лево-вверх
+                }
+                if (event.key.code == Keyboard::Numpad8) {
+                    player.move(0, -1, dungeon.getMap()); // Вверх
+                }
+                if (event.key.code == Keyboard::Numpad9) {
+                    player.move(1, -1, dungeon.getMap()); // Право-вверх
+                }
+                if (event.key.code == Keyboard::Numpad4) {
+                    player.move(-1, 0, dungeon.getMap()); // Влево
+                }
+                if (event.key.code == Keyboard::Numpad6) {
+                    player.move(1, 0, dungeon.getMap()); // Вправо
+                }
+                if (event.key.code == Keyboard::Numpad1) {
+                    player.move(-1, 1, dungeon.getMap()); // Лево-вниз
+                }
+                if (event.key.code == Keyboard::Numpad2) {
+                    player.move(0, 1, dungeon.getMap()); // Вниз
+                }
+                if (event.key.code == Keyboard::Numpad3) {
+                    player.move(1, 1, dungeon.getMap()); // Право-вниз
+                }
                 if (event.key.code == Keyboard::Tab) {
                     interfaceVisible = !interfaceVisible; // Переключаем видимость
                 }
-            }
-            if (event.type == Event::KeyPressed) {
-                if (event.key.code == Keyboard::Up) {
-                    player.move(0, -1, dungeon.getMap());
-                }
-            }
-            if (event.type == Event::KeyPressed) {
-                if (event.key.code == Keyboard::Down) {
-                    player.move(0, +1, dungeon.getMap());
-                }
-            }
-            if (event.type == Event::KeyPressed) {
-                if (event.key.code == Keyboard::Left) {
-                    player.move(-1, 0, dungeon.getMap());
-                }
-            }
-            if (event.type == Event::KeyPressed) {
-                if (event.key.code == Keyboard::Right) {
-                    player.move(+1, 0, dungeon.getMap());
+                if (event.key.code == Keyboard::Escape) {
+                    window.close();
                 }
             }
             if (dungeon.getMap()[player.getY()][player.getX()] == 'D') {
