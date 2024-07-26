@@ -230,8 +230,8 @@ class Dungeon {
 private:
     int width;
     int height;
-    int stairUpX = random(1, width - 1);
-    int stairUpY = random(1, height - 1);
+    int stairUpX;
+    int stairUpY;
     int stairDownX = random(1, width - 1);
     int stairDownY = random(1, height - 1);
     vector<vector<char>> map;
@@ -243,7 +243,21 @@ private:
         uniform_int_distribution<> distrib(min, max);
         return distrib(gen);
     }
-
+    // Подсчет живых соседей для клетки
+    int countLiveNeighbours(int x, int y) {
+        int count = 0;
+        for (int dy = -1; dy <= 1; ++dy) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                if (dx == 0 && dy == 0) {
+                    continue; // Не считаем клетку
+                }
+                if (map[y + dy][x + dx] == '#') {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
     // Алгоритм клеточного автомата
     void generateCellularAutomaton(int iterations) {
         // Заполняем карту случайными клетками (стенa/пол)
@@ -285,21 +299,7 @@ private:
         }
     }
 
-    // Подсчет живых соседей для клетки
-    int countLiveNeighbours(int x, int y) {
-        int count = 0;
-        for (int dy = -1; dy <= 1; ++dy) {
-            for (int dx = -1; dx <= 1; ++dx) {
-                if (dx == 0 && dy == 0) {
-                    continue; // Не считаем клетку
-                }
-                if (map[y + dy][x + dx] == '#') {
-                    count++;
-                }
-            }
-        }
-        return count;
-    }
+
 
     // Создание коридоров
     void createCorridors() {
@@ -409,23 +409,24 @@ private:
             map[r][x] = '.';
         }
     }
-    void createPredefinedCorridors3() {
-        int r = random(1, height);
-        for (int x = 0; x < width; x++) {
-            map[r][x] = '.';
-        }
-    }
+
     void createPredefinedCorridors4() {
-        int r = random(1, height);
-        for (int x = 0; x < width; x++) {
-            map[r][x] = '.';
-        }
-    }
-    void createPredefinedCorridors5() {
         int r = random(1, width);
+        int r2 = random(3, 15);
         for (int x = 0; x < height; x++) {
             map[x][r] = '.';
         }
+        map[r2][r] = 'D';
+    }
+    void createPredefinedCorridors5() {
+        int r = random(1, width);
+        int r2 = random(3, 12);
+        for (int x = 0; x < height; x++) {
+            map[x][r] = '.';
+        }
+        map[8][r] = 'U';
+        stairUpX = r;
+        stairUpY = r2;
     }
 
     // Создаем комнаты (просто прямоугольники)
@@ -433,57 +434,6 @@ private:
         createRoom(2, 2, 10, 12); //  Комната 1
         createRoom(width / 2 - 3, height / 2 - 3, 10, 10); // Комната 2
         createRoom(width - 6, height - 6, 12, 13); // Комната 3
-    }
-
-    bool isPathBetweenStairs(int stairUpX, int stairUpY, int stairDownX, int stairDownY) {
-        // Реализуй поиск в ширину (BFS) или другой алгоритм поиска пути
-        // Используй map для проверки, доступна ли клетка для прохода
-        // Возвращай true, если найден путь, и false, если нет пути
-        // Создаем очередь для поиска в ширину (BFS)
-        queue<pair<int, int>> queue;
-        // Добавляем начальную клетку "stairUp" в очередь
-        queue.push(make_pair(stairUpX, stairUpY));
-
-        // Создаем массив посещенных клеток
-        vector<vector<bool>> visited(height, vector<bool>(width, false));
-        // Помечаем стартовую клетку как посещенную
-        visited[stairUpY][stairUpX] = true;
-
-        // Пока очередь не пуста
-        while (!queue.empty()) {
-            // Извлекаем клетку из очереди
-            pair<int, int> current = queue.front();
-            queue.pop();
-
-            // Если мы добрались до "stairDown" - путь найден
-            if (current.first == stairDownX && current.second == stairDownY) {
-                return true;
-            }
-
-            // Проверяем соседние клетки
-            int dx[] = { 0, 1, 0, -1 }; //  Горизонтальные смещения
-            int dy[] = { 1, 0, -1, 0 }; // Вертикальные смещения
-
-            for (int i = 0; i < 4; ++i) {
-                int nextX = current.first + dx[i];
-                int nextY = current.second + dy[i];
-
-                // Проверяем, находится ли соседняя клетка в пределах карты
-                if (nextX >= 0 && nextX < width && nextY >= 0 && nextY < height) {
-                    // Проверяем, доступна ли соседняя клетка (проход или лестница)
-                    if (map[nextY][nextX] == '.' || map[nextY][nextX] == 'U' || map[nextY][nextX] == 'D') {
-                        // Если клетка не посещена - добавляем ее в очередь
-                        if (!visited[nextY][nextX]) {
-                            queue.push(make_pair(nextX, nextY));
-                            visited[nextY][nextX] = true;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Если очередь опустела, не найдя "stairDown" - пути нет
-        return false;
     }
 
 public:
@@ -518,38 +468,13 @@ public:
         createPredefinedRooms();
         createPredefinedCorridors();
         createPredefinedCorridors2();
-        createPredefinedCorridors3();
+        createPredefinedCorridors2();
         createPredefinedCorridors4();
+        createPredefinedCorridors5();
+        createPredefinedCorridors5();
         createPredefinedCorridors5();// Добавляем вертикальные коридоры
         createCorridorsBetweenRooms();
 
-        bool stairUpCreated = false;
-        bool stairDownCreated = false;
-        while (!stairUpCreated || !stairDownCreated) {
-            int x = random(1, width - 1);
-            int y = random(1, height - 1);
-
-            // Проверяем, не была ли уже создана лестница вверх
-            if (!stairUpCreated && map[y][x] == '.') {
-                map[y][x] = 'U';
-                stairUpCreated = true;
-                stairUpX = x;
-                stairUpY = y;
-            }
-
-            // Проверяем, не была ли уже создана лестница вниз
-            if (!stairDownCreated && map[y][x] == '.') {
-                map[y][x] = 'D';
-                stairDownCreated = true;
-            }
-        }
-        // Проверяем, есть ли проход между ними
-        while (!isPathBetweenStairs(stairUpX, stairUpY, stairDownX, stairDownY)) {
-            // Если нет, переносим "stairDown" в другое место
-            stairDownX = random(1, width - 1);
-            stairDownY = random(1, height - 1);
-            map[stairDownY][stairDownX] = 'D';
-        }
         //раскид предметов
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
