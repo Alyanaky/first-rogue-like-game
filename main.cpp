@@ -131,7 +131,7 @@ private:
 public:
     // Конструктор
     Item(const string& itemName, int damage = 0, int defense = 0, int HEALcount = 0, int DTP = 0, int xCoord = 0, int yCoord = 0) :
-        name(itemName), damageBonus(damage), defenseBonus(defense), heal(HEALcount), damageToPlayer(DTP), x(xCoord), y(yCoord) {
+        name(itemName), damageBonus(damage), defenseBonus(defense), heal(HEALcount), damageToPlayer(DTP) {
         shape.setSize(Vector2f(32, 32)); // Размер формы предмета
         shape.setFillColor(Color::Green); // Цвет формы предмета
         shape.setPosition(x * 32, y * 32); // Позиция формы предмета
@@ -144,9 +144,6 @@ public:
     int getDefenseBonus() const { return defenseBonus; }
     int getHeal() const { return heal; }
     int getDamageToPlayer() const { return damageToPlayer; }
-    RectangleShape getShape() const { return shape; }
-    int getX() const { return x; }
-    int getY() const { return y; }
 
     // Метод для применения эффекта предмета к игроку
     void applyEffect(Player& player) const {
@@ -501,68 +498,70 @@ int main() {
     setlocale(LC_ALL, "Russian");
     // Инициализация генератора случайных чисел
     srand(time(NULL));
+    random_device rd;
+    mt19937 gen(rd());
 
     // ===============================================================================
     // Создание массива предметов
     // Оружие
     vector<Item*> items;
-    items.push_back(new Item("Меч", 30, 0, 0, 0, 2, 3));
-    items.push_back(new Item("Булава", 20, 0, 0, 0, 4, 5));
-    items.push_back(new Item("Копье", 40, 0, 0, 0, 6, 2));
-    items.push_back(new Item("Двуручный меч", 60, 0, 0, 0, 8, 4));
-    items.push_back(new Item("Кинжал", 15, 0, 0, 0, 10, 1));
-    items.push_back(new Item("Топор", 40, 0, 0, 0, 5, 3));
+    items.push_back(new Item("Sword", 30, 0, 0, 0, 2, 3));
+    items.push_back(new Item("Mace", 20, 0, 0, 0, 4, 5));
+    items.push_back(new Item("Lancer", 40, 0, 0, 0, 6, 2));
+    items.push_back(new Item("Two hand sword", 60, 0, 0, 0, 8, 4));
+    items.push_back(new Item("Knife", 15, 0, 0, 0, 10, 1));
+    items.push_back(new Item("Axe", 40, 0, 0, 0, 5, 3));
 
     // Доспехи
-    items.push_back(new Item("Щит", 0, 10, 0, 0, 2, 5));
-    items.push_back(new Item("Доспех", 0, 40, 0, 0, 4, 2));
-    items.push_back(new Item("Кожаная броня", 0, 5, 0, 0, 6, 5));
-    items.push_back(new Item("Кольчуга", 0, 15, 0, 0, 8, 3));
+    items.push_back(new Item("Shield", 0, 10, 0, 0, 2, 5));
+    items.push_back(new Item("Mail", 0, 40, 0, 0, 4, 2));
+    items.push_back(new Item("Leather Mail", 0, 5, 0, 0, 6, 5));
+    items.push_back(new Item("Ring mail", 0, 15, 0, 0, 8, 3));
     items.push_back(new Item("Пластинчатая броня", 0, 25, 0, 0, 10, 2));
     items.push_back(new Item("Шлем", 0, 5, 0, 0, 5, 4));
 
     // Прочее
-    items.push_back(new Item("Еда", 0, 0, 10, 0, 2, 2));
-    items.push_back(new Item("Питьевая вода", 0, 0, 5, 0, 4, 4));
-    items.push_back(new Item("Зелье лечения", 0, 0, 20, 0, 6, 1));
-    items.push_back(new Item("Подозрительное зелье", 0, 0, 0, 30, 8, 2));
+    items.push_back(new Item("Food", 0, 0, 10, 0, 2, 2));
+    items.push_back(new Item("Drinking water", 0, 0, 5, 0, 4, 4));
+    items.push_back(new Item("Healing potion", 0, 0, 20, 0, 6, 1));
+    items.push_back(new Item("Suspicious potion", 0, 0, 0, 30, 8, 2));
 
     // ===============================================================================
-    // Создание массива врагов
+    // Creating the enemies array
     vector<Enemy*> enemies;
-    // Слабые противники 1 - 9
-    enemies.push_back(new Enemy("Крыса", 20, 5, 10, 2, 2));
-    enemies.push_back(new Enemy("Паук", 15, 3, 8, 4, 4));
-    enemies.push_back(new Enemy("Гоблин", 25, 7, 15, 6, 3));
-    enemies.push_back(new Enemy("Волк", 30, 10, 18, 8, 1));
-    enemies.push_back(new Enemy("Скелет", 40, 30, 30, 10, 4));
-    enemies.push_back(new Enemy("Зомби", 35, 15, 25, 5, 5));
-    enemies.push_back(new Enemy("Нежить", 28, 12, 20, 2, 4));
-    enemies.push_back(new Enemy("Бандит", 32, 18, 22, 4, 1));
-    enemies.push_back(new Enemy("Бешеный волк", 45, 15, 28, 6, 4));
+    // Weak enemies 1 - 9
+    enemies.push_back(new Enemy("Rat", 20, 5, 10, 2, 2));
+    enemies.push_back(new Enemy("Spider", 15, 3, 8, 4, 4));
+    enemies.push_back(new Enemy("Goblin", 25, 7, 15, 6, 3));
+    enemies.push_back(new Enemy("Wolf", 30, 10, 18, 8, 1));
+    enemies.push_back(new Enemy("Skeleton", 40, 30, 30, 10, 4));
+    enemies.push_back(new Enemy("Zombie", 35, 15, 25, 5, 5));
+    enemies.push_back(new Enemy("Undead", 28, 12, 20, 2, 4));
+    enemies.push_back(new Enemy("Bandit", 32, 18, 22, 4, 1));
+    enemies.push_back(new Enemy("Frenzied wolf", 45, 15, 28, 6, 4));
 
-    // Средние противники 10 - 20
-    enemies.push_back(new Enemy("Зомби", 50, 25, 35, 8, 3));
-    enemies.push_back(new Enemy("Огр", 60, 25, 40, 10, 2));
-    enemies.push_back(new Enemy("Тролль", 70, 30, 50, 5, 2));
-    enemies.push_back(new Enemy("Голем", 80, 40, 60, 2, 5));
-    enemies.push_back(new Enemy("Гриф", 55, 28, 45, 4, 3));
-    enemies.push_back(new Enemy("Ведьма", 50, 20, 35, 6, 2));
-    enemies.push_back(new Enemy("Оборотень", 65, 35, 55, 8, 4));
-    enemies.push_back(new Enemy("Дракон", 100, 50, 80, 10, 3));
-    enemies.push_back(new Enemy("Демон", 75, 45, 65, 5, 4));
-    enemies.push_back(new Enemy("Призрак", 40, 10, 30, 2, 1));
+    // Medium enemies 10 - 20
+    enemies.push_back(new Enemy("Zombie", 50, 25, 35, 8, 3));
+    enemies.push_back(new Enemy("Ogre", 60, 25, 40, 10, 2));
+    enemies.push_back(new Enemy("Troll", 70, 30, 50, 5, 2));
+    enemies.push_back(new Enemy("Golem", 80, 40, 60, 2, 5));
+    enemies.push_back(new Enemy("Griffin", 55, 28, 45, 4, 3));
+    enemies.push_back(new Enemy("Witch", 50, 20, 35, 6, 2));
+    enemies.push_back(new Enemy("Werewolf", 65, 35, 55, 8, 4));
+    enemies.push_back(new Enemy("Dragon", 100, 50, 80, 10, 3));
+    enemies.push_back(new Enemy("Demon", 75, 45, 65, 5, 4));
+    enemies.push_back(new Enemy("Ghost", 40, 10, 30, 2, 1));
 
-    // Сильные противники 21 - 30
-    enemies.push_back(new Enemy("Ледяной голем", 120, 60, 100, 4, 2));
-    enemies.push_back(new Enemy("Огненный демон", 110, 70, 90, 6, 5));
-    enemies.push_back(new Enemy("Гидра", 150, 80, 120, 8, 2));
-    enemies.push_back(new Enemy("Дракон-хранитель", 200, 100, 150, 10, 5));
-    enemies.push_back(new Enemy("Древний голем", 180, 90, 130, 5, 3));
-    enemies.push_back(new Enemy("Король гоблинов", 130, 75, 110, 2, 4));
-    enemies.push_back(new Enemy("Лорд демонов", 160, 95, 140, 4, 5));
-    enemies.push_back(new Enemy("Босс", 250, 120, 200, 6, 4));
-    enemies.push_back(new Enemy("Финальный босс", 400, 150, 250, 8, 3));
+    // Strong enemies 21 - 30
+    enemies.push_back(new Enemy("Ice golem", 120, 60, 100, 4, 2));
+    enemies.push_back(new Enemy("Fire demon", 110, 70, 90, 6, 5));
+    enemies.push_back(new Enemy("Hydra", 150, 80, 120, 8, 2));
+    enemies.push_back(new Enemy("Guardian dragon", 200, 100, 150, 10, 5));
+    enemies.push_back(new Enemy("Ancient golem", 180, 90, 130, 5, 3));
+    enemies.push_back(new Enemy("Goblin King", 130, 75, 110, 2, 4));
+    enemies.push_back(new Enemy("Demon Lord", 160, 95, 140, 4, 5));
+    enemies.push_back(new Enemy("Boss", 250, 120, 200, 6, 4));
+    enemies.push_back(new Enemy("Final Boss", 400, 150, 250, 8, 3));
 
     // ==================================================================\
 
@@ -574,6 +573,21 @@ int main() {
     Dungeon dungeon(50, 30);
     dungeon.generate(1);
     int currentLevel = 1;
+    // Генерация врагов
+    for (int i = 0; i < 5; ++i) { // Создаем 5 врагов
+        uniform_int_distribution<> distribX(1, dungeon.getWidth() - 1); // Распределение для координаты x
+        uniform_int_distribution<> distribY(1, dungeon.getHeight() - 1); // Распределение для координаты y
+
+        int x = distribX(gen); // Генерируем случайную координату x
+        int y = distribY(gen); // Генерируем случайную координату y
+        if (dungeon.getMap()[y][x] == '.') {
+            Enemy* enemy = randomEnemy(enemies); // Выбираем случайного врага
+            if (enemy != nullptr) {
+                enemy->setPosition(x, y);
+                dungeon.getMap()[y][x] = 'E'; //  Помечаем клетку как врага
+            }
+        }
+    }
     // Создание объекта игрока
     Player player(100, 20, 5, 0, 1, true, dungeon.getUpstairX(), dungeon.getUpstairY());
 
@@ -684,7 +698,7 @@ int main() {
         return 1;
     }
     Sprite playerSprite(playerTexture);
-    playerSprite.setTextureRect(IntRect(0, 0, 32, 32));
+
 
     // ==================================================================\
 
@@ -735,8 +749,32 @@ int main() {
                 // Перемещаем игрока на новый уровень
                 player.setPosition(dungeon.getUpstairX(), dungeon.getUpstairY());
             }
+   /*         if (dungeon.getMap()[player.getY()][player.getX()] == 'I') {
+                Item* item = randomDrop(items);
+                if (item == nullptr) {
+                    continue; // Если нет предметов, пропускаем
+                }
+                string itemName = item->getName();
+                dungeon.getMap()[player.getY()][player.getX()] = '.';
+                // Выводим сообщение в нижней части экрана
+                Text messageText("Вы подобрали " + itemName, font, 16);
+                messageText.setFillColor(Color::White);
+                messageText.setPosition(window.getSize().x / 2 - messageText.getLocalBounds().width / 2,
+                    window.getSize().y - messageText.getLocalBounds().height - 10);
+
+                // Применяем эффект предмета к игроку
+                item->applyEffect(player);
+
+                // Удаляем предмет из массива
+                for (size_t i = 0; i < items.size(); i++) {
+                    if (items[i]->getName() == itemName) {
+                        items.erase(items.begin() + i);
+                        break;
+                    }
+                }
+            }*/
         }
-        // Обработка нажатия клавиш
+
 
             // Очищаем экран
         window.clear(Color::Black);
@@ -767,7 +805,12 @@ int main() {
                     stairDownSprite.setPosition(x * 32, y * 32);
                     window.draw(stairDownSprite);
                     break;
+                case 'E': // StairDown
+                    enemySprite.setPosition(x * 32, y * 32);
+                    window.draw(enemySprite);
+                    break;
                 }
+
             }
         }
         window.draw(playerSprite);
@@ -785,10 +828,10 @@ int main() {
             window.draw(wallSprite);
         }
         // Обновляем текст с характеристиками игрока
-        healthText.setString("Здоровье: " + to_string(player.getHealth()));
-        strengthText.setString("Сила: " + to_string(player.getStrength()));
-        defenseText.setString("Защита: " + to_string(player.getDefense()));
-        levelText.setString("Уровень: " + to_string(player.getLevel()));
+        healthText.setString("Health: " + to_string(player.getHealth()));
+        strengthText.setString("Power: " + to_string(player.getStrength()));
+        defenseText.setString("Defence: " + to_string(player.getDefense()));
+        levelText.setString("Level: " + to_string(player.getLevel()));
         dungeonLevelText.setString("Dungeon Level: " + to_string(currentLevel));
         if (interfaceVisible) {
             // Выдвигаем интерфейс
@@ -821,6 +864,24 @@ int main() {
             dungeonLevelText.setPosition(window.getSize().x + 10, 190);
         }
         playerSprite.setPosition(player.getX() * 32, player.getY() * 32);
+        for (int y = 0; y < dungeon.getHeight(); ++y) {
+            for (int x = 0; x < dungeon.getWidth(); ++x) {
+                if (dungeon.getMap()[y][x] == 'E') {
+                    // Рандомное направление движения
+                    int dx = rand() % 3 - 1;
+                    int dy = rand() % 3 - 1;
+
+                    // Проверка, чтобы враг не уходил за границы карты и не прошел сквозь стену
+                    if (x + dx >= 0 && x + dx < dungeon.getWidth() &&
+                        y + dy >= 0 && y + dy < dungeon.getHeight() &&
+                        dungeon.getMap()[y + dy][x + dx] != '#') {
+                        dungeon.getMap()[y][x] = '.'; // Стираем врага с прежней клетки
+                        dungeon.getMap()[y + dy][x + dx] = 'E'; // Перемещаем врага
+                    }
+                }
+            }
+        }
+
         window.draw(playerSprite);
         window.display();
     }
