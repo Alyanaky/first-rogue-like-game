@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
-project(roguelike)
+project(RoguelikeGame)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# Добавляем библиотеки SFML
-find_package(SFML REQUIRED graphics window system)
+find_package(SFML 2.5 REQUIRED system window graphics network audio)
 
-# Добавляем файлы исходного кода
-add_executable(roguelike main.cpp player.cpp enemy.cpp item.cpp dungeon.cpp game.cpp)
+add_executable(RoguelikeGame main.cpp Player.cpp Enemy.cpp Item.cpp Dungeon.cpp)
 
-target_link_libraries(roguelike ${SFML_LIBRARIES})
+target_link_libraries(RoguelikeGame sfml-system sfml-window sfml-graphics sfml-network sfml-audio)
+
+target_include_directories(RoguelikeGame PRIVATE ${SFML_INCLUDE_DIR})

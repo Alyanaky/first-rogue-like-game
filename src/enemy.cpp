@@ -1,14 +1,14 @@
-#include "Enemy.h"
-#include "Player.h"
+#include "enemy.h"
 
-Enemy::Enemy(const string& enemyName, int hp, int atk, int expReward, int xCoord, int yCoord)
-    : name(enemyName), health(hp), atack(atk), experienceReward(expReward), x(xCoord), y(yCoord) {
+Enemy::Enemy(const std::string& enemyName, int hp, int atk, int expReward, int xCoord, int yCoord) :
+    name(enemyName), health(hp), atack(atk), experienceReward(expReward), x(xCoord), y(yCoord) {
     shape.setSize(sf::Vector2f(32, 32));
     shape.setFillColor(sf::Color::Red);
     shape.setPosition(x * 32, y * 32);
 }
 
-const string& Enemy::getName() const { return name; }
+// Геттеры
+const std::string& Enemy::getName() const { return name; }
 int Enemy::getHealth() const { return health; }
 int Enemy::getAttack() const { return atack; }
 bool Enemy::getLife() const { return life; }
@@ -17,6 +17,7 @@ sf::RectangleShape Enemy::getShape() const { return shape; }
 int Enemy::getX() const { return x; }
 int Enemy::getY() const { return y; }
 
+// Методы
 void Enemy::takeDamage(int damage) {
     health -= damage;
     if (health <= 0) {

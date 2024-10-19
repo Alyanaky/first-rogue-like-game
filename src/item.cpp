@@ -1,19 +1,20 @@
-#include "Item.h"
-#include "Player.h"
+#include "item.h"
 
-Item::Item(const string& itemName, int damage, int defense, int HEALcount, int DTP, int xCoord, int yCoord)
-    : name(itemName), damageBonus(damage), defenseBonus(defense), heal(HEALcount), damageToPlayer(DTP), x(xCoord), y(yCoord) {
+Item::Item(const std::string& itemName, int damage, int defense, int HEALcount, int DTP, int xCoord, int yCoord) :
+    name(itemName), damageBonus(damage), defenseBonus(defense), heal(HEALcount), damageToPlayer(DTP) {
     shape.setSize(sf::Vector2f(32, 32));
     shape.setFillColor(sf::Color::Green);
-    shape.setPosition(x * 32, y * 32);
+    shape.setPosition(xCoord * 32, yCoord * 32);
 }
 
-const string& Item::getName() const { return name; }
+// Геттеры
+const std::string& Item::getName() const { return name; }
 int Item::getDamageBonus() const { return damageBonus; }
 int Item::getDefenseBonus() const { return defenseBonus; }
 int Item::getHeal() const { return heal; }
 int Item::getDamageToPlayer() const { return damageToPlayer; }
 
+// Методы
 void Item::applyEffect(Player& player) const {
     player.setStrength(player.getStrength() + damageBonus);
     player.setDefense(player.getDefense() + defenseBonus);
