@@ -7,14 +7,12 @@ Item::Item(const std::string& itemName, int damage, int defense, int HEALcount, 
     shape.setPosition(xCoord * 32, yCoord * 32);
 }
 
-// Геттеры
 const std::string& Item::getName() const { return name; }
 int Item::getDamageBonus() const { return damageBonus; }
 int Item::getDefenseBonus() const { return defenseBonus; }
 int Item::getHeal() const { return heal; }
 int Item::getDamageToPlayer() const { return damageToPlayer; }
 
-// Методы
 void Item::applyEffect(Player& player) const {
     player.setStrength(player.getStrength() + damageBonus);
     player.setDefense(player.getDefense() + defenseBonus);
